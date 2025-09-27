@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, Container, TextField, InputAdornment } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { AppBar, Toolbar, Typography, Button, Box, Container, TextField, InputAdornment, IconButton, Menu, MenuItem, Avatar } from '@mui/material';
+import { Search, AccountCircle, Movie, Home as HomeIcon } from '@mui/icons-material';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import Home from './pages/Home.jsx';
@@ -11,6 +11,7 @@ import Auth from './components/Auth';
 function NavBar({ onSearch }) {
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,8 +27,24 @@ function NavBar({ onSearch }) {
     }
   };
 
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    getAuth().signOut();
+    handleMenuClose();
+  };
+
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#1a1a1a' }}>
+    <AppBar position="static" sx={{ 
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    }}>
       <Toolbar>
         <Typography
           variant="h6"
@@ -38,10 +55,14 @@ function NavBar({ onSearch }) {
             color: 'inherit',
             fontWeight: 'bold',
             fontSize: '1.5rem',
-            mr: 4
+            mr: 4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
           }}
         >
-          🎬 Cinehub
+          <Movie sx={{ fontSize: '2rem' }} />
+          CineHub
         </Typography>
         
         <Box component="form" onSubmit={handleSearch} sx={{ flexGrow: 1, maxWidth: 600, mx: 2 }}>
@@ -60,16 +81,17 @@ function NavBar({ onSearch }) {
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255,255,255,0.1)',
+                backgroundColor: 'rgba(255,255,255,0.15)',
                 color: 'white',
+                borderRadius: '25px',
                 '& fieldset': {
-                  borderColor: 'rgba(255,255,255,0.3)',
+                  borderColor: 'transparent',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'rgba(255,255,255,0.5)',
+                  borderColor: 'rgba(255,255,255,0.3)',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: 'white',
+                  borderColor: 'rgba(255,255,255,0.8)',
                 },
               },
               '& .MuiInputBase-input::placeholder': {
@@ -80,25 +102,67 @@ function NavBar({ onSearch }) {
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Button color="inherit" component={Link} to="/">
+          <IconButton color="inherit" component={Link} to="/" sx={{ mr: 1 }}>
+            <HomeIcon />
+          </IconButton>
+          <Button 
+            color="inherit" 
+            component={Link} 
+            to="/"
+            sx={{ 
+              borderRadius: '20px',
+              textTransform: 'none',
+              fontWeight: 'bold'
+            }}
+          >
             Home
           </Button>
           {user ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body2">
-                Welcome, {user.displayName || user.email?.split('@')[0]}!
-              </Typography>
-              <Button
+            <>
+              <IconButton
                 color="inherit"
-                onClick={() => getAuth().signOut()}
-                variant="outlined"
-                size="small"
+                onClick={handleMenuOpen}
+                sx={{ ml: 1 }}
               >
-                Logout
-              </Button>
-            </Box>
+                <Avatar 
+                  src={user.photoURL} 
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {(user.displayName || user.email)?.charAt(0)?.toUpperCase()}
+                </Avatar>
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              >
+                <MenuItem disabled>
+                  <Typography variant="body2">
+                    {user.displayName || user.email?.split('@')[0]}
+                  </Typography>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+            </>
           ) : (
-            <Button color="inherit" variant="outlined" component={Link} to="/signin">
+            <Button 
+              color="inherit" 
+              variant="outlined" 
+              component={Link} 
+              to="/signin"
+              sx={{ 
+                borderRadius: '20px',
+                textTransform: 'none',
+                fontWeight: 'bold',
+                borderColor: 'rgba(255,255,255,0.5)',
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
               Sign In
             </Button>
           )}
@@ -113,15 +177,16 @@ function Footer() {
     <Box 
       component="footer" 
       sx={{ 
-        backgroundColor: '#1a1a1a', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white', 
         py: 3, 
         textAlign: 'center',
-        mt: 'auto'
+        mt: 'auto',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
       }}
     >
       <Typography variant="body2">
-        Made with ❤️ by <a href="https://hub.com/ajha19" target="_blank" rel="noopener noreferrer" style={{ color: '#ff6b6b', textDecoration: 'none' }}>AJ</a>
+        Made with ❤️ by <a href="https://github.com/ajha19" target="_blank" rel="noopener noreferrer" style={{ color: '#ffeb3b', textDecoration: 'none', fontWeight: 'bold' }}>AJ</a>
       </Typography>
     </Box>
   );

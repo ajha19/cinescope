@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Box from '@mui/material/Box';
+import { 
+  Button, 
+  TextField, 
+  Box, 
+  Typography, 
+  Divider, 
+  Alert, 
+  CircularProgress,
+  InputAdornment,
+  IconButton
+} from '@mui/material';
+import { Google, Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import firebaseApp from '../firebase';
 
 const auth = getAuth(firebaseApp);
@@ -14,6 +23,8 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -21,16 +32,27 @@ export default function Auth() {
   }, []);
 
   const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
     try {
       await signInWithPopup(auth, provider);
     } catch (err) {
-      setError(err.message);
+      setError('Failed to sign in with Google. Please try again.');
     }
+    setLoading(false);
   };
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
+    
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+    
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -38,17 +60,33 @@ export default function Auth() {
         await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.code === 'auth/user-not-found' ? 'No account found with this email' : 
+               err.code === 'auth/wrong-password' ? 'Incorrect password' : 
+               err.code === 'auth/email-already-in-use' ? 'Email already in use' :
+               'Authentication failed. Please try again.');
     }
+    setLoading(false);
   };
 
   const handleLogout = () => signOut(auth);
 
   if (user) {
     return (
-      <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        <div>Welcome, {user.displayName || user.email}!</div>
-        <Button variant="outlined" color="secondary" onClick={handleLogout}>
+      <Box display="flex" flexDirection="column" alignItems="center" gap={3}>
+        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+          Welcome, {user.displayName || user.email?.split('@')[0]}! 🎉
+        </Typography>
+        <Button 
+          variant="outlined" 
+          color="secondary" 
+          onClick={handleLogout}
+          sx={{ 
+            borderRadius: '25px',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            px: 4
+          }}
+        >
           Logout
         </Button>
       </Box>
@@ -57,34 +95,125 @@ export default function Auth() {
 
   return (
     <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-      <Button variant="contained" color="primary" onClick={handleGoogleSignIn}>
-        Sign in with Google
+      {error && (
+        <Alert severity="error" sx={{ width: '100%', borderRadius: '12px' }}>
+          {error}
+        </Alert>
+      )}
+      
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={handleGoogleSignIn}
+        disabled={loading}
+        startIcon={loading ? <CircularProgress size={20} /> : <Google />}
+        sx={{ 
+          width: '100%',
+          py: 1.5,
+          borderRadius: '25px',
+          textTransform: 'none',
+          fontWeight: 'bold',
+          fontSize: '1rem',
+          background: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #3367d6 0%, #2d8f47 100%)',
+          }
+        }}
+      >
+        {loading ? 'Signing in...' : 'Continue with Google'}
       </Button>
-      <form onSubmit={handleEmailAuth} style={{ width: '100%' }}>
+      
+      <Divider sx={{ width: '100%', my: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          OR
+        </Typography>
+      </Divider>
+      
+      <Box component="form" onSubmit={handleEmailAuth} sx={{ width: '100%' }}>
         <TextField
-          label="Email"
+          label="Email Address"
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
           fullWidth
           margin="normal"
+          disabled={loading}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Email color="action" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+            }
+          }}
         />
         <TextField
           label="Password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={e => setPassword(e.target.value)}
           fullWidth
           margin="normal"
+          disabled={loading}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Lock color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+            }
+          }}
         />
-        <Button type="submit" variant="contained" color="primary" fullWidth>
-          {isSignUp ? 'Sign Up with Email' : 'Sign In with Email'}
+        <Button 
+          type="submit" 
+          variant="contained" 
+          color="primary" 
+          fullWidth
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} /> : null}
+          sx={{ 
+            mt: 3,
+            py: 1.5,
+            borderRadius: '25px',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            fontSize: '1rem'
+          }}
+        >
+          {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
         </Button>
-      </form>
-      <Button color="secondary" onClick={() => setIsSignUp(s => !s)}>
+      </Box>
+      
+      <Button 
+        color="secondary" 
+        onClick={() => setIsSignUp(s => !s)}
+        disabled={loading}
+        sx={{ 
+          textTransform: 'none',
+          fontWeight: 'bold',
+          borderRadius: '20px'
+        }}
+      >
         {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
       </Button>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
     </Box>
   );
 }
