@@ -137,22 +137,39 @@ function MovieDetail() {
           <Button 
             startIcon={<ArrowBack />} 
             onClick={() => navigate('/')}
-            sx={{ mb: 3 }}
-            variant="outlined"
+            variant="contained"
+            color="primary"
+            sx={{ 
+              mb: 3,
+              borderRadius: '25px',
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3
+            }}
           >
             Back to Movies
           </Button>
 
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+        <Paper elevation={3} sx={{ 
+          p: 4, 
+          borderRadius: '20px',
+          background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)'
+        }}>
           <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={4}>
             <Fade in timeout={700}>
-              <Card sx={{ minWidth: 300, maxWidth: 350 }}>
+              <Card sx={{ 
+                minWidth: 300, 
+                maxWidth: 350,
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+              }}>
                 <CardMedia
                   component="img"
                   height="500"
                   image={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : ''}
                   alt={movie.title}
-                  sx={{ borderRadius: 1 }}
+                  sx={{ objectFit: 'cover' }}
                 />
               </Card>
             </Fade>
@@ -167,20 +184,23 @@ function MovieDetail() {
                   <Chip 
                     label={`📅 ${new Date(movie.release_date).getFullYear()}`} 
                     color="primary" 
-                    variant="outlined" 
+                    variant="filled"
+                    sx={{ borderRadius: '12px', fontWeight: 'bold' }}
                   />
                   {imdbRating && (
                     <Chip 
                       label={`⭐ ${imdbRating}/10`} 
-                      color="secondary" 
-                      variant="outlined" 
+                      color="warning" 
+                      variant="filled"
+                      sx={{ borderRadius: '12px', fontWeight: 'bold' }}
                     />
                   )}
                   {movie.revenue && (
                     <Chip 
                       label={`💰 $${movie.revenue.toLocaleString()}`} 
                       color="success" 
-                      variant="outlined" 
+                      variant="filled"
+                      sx={{ borderRadius: '12px', fontWeight: 'bold' }}
                     />
                   )}
                 </Box>
